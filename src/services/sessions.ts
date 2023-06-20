@@ -1,8 +1,9 @@
-import { ConfigController } from 'services/config'
-import { Session, Stage } from 'types'
+import {ConfigController} from 'services/config'
+import {Session, Stage} from 'types'
 
 export async function GetSessions(): Promise<Session[]> {
   const event = await ConfigController.getConfig()
+
   if (!event.data) {
     return []
   }
@@ -11,8 +12,7 @@ export async function GetSessions(): Promise<Session[]> {
 
   try {
     const dataModule: any = await import(`services/${type}/index`)
-    const schedule = await dataModule.GetSchedule(config)
-    return schedule
+    return dataModule.GetSchedule(config)
   } catch (e) {
     console.error(e)
     throw new Error('Unable to get session data...')
@@ -21,11 +21,8 @@ export async function GetSessions(): Promise<Session[]> {
 
 export async function GetSessionsForStage(stage: Stage['id']): Promise<Session[]> {
   const sessions = await GetSessions()
-  const filteredSessions = sessions.filter((i) => i.stage.id === stage)
-  // if (filteredSessions.length === 0) {
-  //   throw new Error(`No sessions found for stage ${stage}, at least 1 is required`)
-  // }
-  return filteredSessions
+
+  return sessions.filter((i) => i.stage.id === stage)
 }
 
 export async function GetSessionById(id: string): Promise<Session | undefined> {

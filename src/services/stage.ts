@@ -14,6 +14,7 @@ export async function GetStages(): Promise<Stage[]> {
   if (!stages || stages.length === 0) {
     throw new Error('No stages found, please check configuration object')
   }
+
   return stages
 }
 
