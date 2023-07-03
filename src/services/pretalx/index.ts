@@ -1,6 +1,5 @@
 import { Session, Stage } from 'types'
 import { DataConfig } from 'types/config'
-import videos from './videos.json'
 
 export async function GetSchedule(config: DataConfig): Promise<Session[]> {
   if (!config['apiBaseUri']) throw new Error('No valid apiBaseUri set for Pretalx module')
