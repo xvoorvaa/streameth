@@ -6,6 +6,7 @@ import { datetimeToUnixTimestamp } from 'utils/dateTime'
 import { promises as fs } from 'fs'
 import path from 'path'
 import PQueue from 'p-queue'
+import { Z_UNKNOWN } from 'zlib'
 
 /* -------------------- */
 
@@ -170,7 +171,7 @@ export async function getSessions(config: DataConfig): Promise<Session[]> {
         let endStr = `${date.getFullYear()}-${('0' + (date.getMonth()+1)).slice(-2)}-${('0' + date.getDate()).slice(-2)} ${('0' + endDate.getHours()).slice(-2)}:${('0' + endDate.getMinutes()).slice(-2)}`
 
         const start = datetimeToUnixTimestamp(startStr)
-        const end = datetimeToUnixTimestamp(endStr)
+        const end = datetimeToUnixTimestamp(endStr) 
 
         return {
           id: GetSlug(Talk),
@@ -184,7 +185,7 @@ export async function getSessions(config: DataConfig): Promise<Session[]> {
         }
       })
 
-      sessions.push(...sessionData.filter(i => i !== null))
+      sessions.push(...sessionData.filter((i: any) => i !== null))
     }
   }
 
