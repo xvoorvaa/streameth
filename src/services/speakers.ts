@@ -14,7 +14,7 @@ export async function GetSpeakers(): Promise<Speaker[]> {
     const schedule = await module.GetSpeakers(config)
     return schedule
   } catch (e) {
-    console.log('Unable to  load speakers..')
+    console.error('Unable to load speakers..')
     console.error(e)
     throw e
   }

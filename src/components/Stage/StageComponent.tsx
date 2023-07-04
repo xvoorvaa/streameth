@@ -18,10 +18,6 @@ export function StageComponent() {
   const currentStage = useStage()
   const { sessions, currentSession } = useSessions([
     { type: 'stage', value: currentStage.id },
-    {
-      type: 'day',
-      value: moment(new Date()).startOf('day').valueOf(),
-    },
   ])
   const [modalOpen, setModalOpen] = useState(false)
   const [modalContentType, setModalContentType] = useState<string | null>(null)

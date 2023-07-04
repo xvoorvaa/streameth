@@ -9,14 +9,9 @@ import PQueue from 'p-queue'
 
 /* -------------------- */
 
-const SPEAKER_SHEET = 'Speakers'
-const SPEAKER_DATA_RANGE = 'B3:B'
+const SPEAKER_DATA_RANGE = 'B3:F'
 
-const STAGE_SHEET = 'Stages'
-const STAGE_DATA_RANGE = 'A3:D'
-
-const SESSION_SHEET = 'Sessions'
-const SESSION_DATA_RANGE = 'A3:E'
+const SESSION_DATA_RANGE = 'A3:K'
 
 /* -------------------- */
 
@@ -42,7 +37,7 @@ async function connectToGoogleSheets(config: DataConfig) {
   return sheets
 }
 
-async function getSheetName(config: DataConfig) {
+async function getSheetNames(config: DataConfig) {
   const sheets = await connectToGoogleSheets(config)
   const sheetId = process.env.NEXT_PUBLIC_DATA_CONFIG_SHEETID as string
 
@@ -52,15 +47,14 @@ async function getSheetName(config: DataConfig) {
     })
   )
 
-  const sheetName = sheetsResponse?.data?.sheets?.map((i: any) => i.properties.title)[0]
-  if (!sheetName) throw new Error('No valid sheet name found')
+  const sheetNames = sheetsResponse?.data?.sheets?.map((i: any) => i.properties.title)
+  if (!sheetNames || sheetNames.length === 0) throw new Error('No valid sheet names found')
 
-  return sheetName
+  return sheetNames
 }
 
-async function getDataForRange(config: DataConfig, range: string): Promise<any> {
+async function getDataForRange(config: DataConfig, sheetName: string, range: string): Promise<any> {
   const sheets = await connectToGoogleSheets(config)
-  const sheetName = await getSheetName(config);
   const sheetId = process.env.NEXT_PUBLIC_DATA_CONFIG_SHEETID as string
 
   const response = (await API_QUEUE.add(() =>
@@ -79,95 +73,122 @@ async function getDataForRange(config: DataConfig, range: string): Promise<any> 
 
 export async function GetStages(config: DataConfig): Promise<Stage[]> {
   const mainStage: Stage = {
-    id: GetSlug('Main Stage'),
+    id: GetSlug('main-stage'),
     name: 'Main stage',
     stream: [
       {
-        id: '0e577125-8b01-45bd-b058-c6f2731f73f9', // TODO: Not showing the stream
+        id: '0e577125-8b01-45bd-b058-c6f2731f73f9', // TODO: API Token
       },
     ],
-  };
+  }
 
-  return [mainStage];
+  return [mainStage]
 }
 
 export async function getSpeakers(config: DataConfig): Promise<Speaker[]> {
-  const data = await getDataForRange(config, SPEAKER_DATA_RANGE)
+  const sheetNames = await getSheetNames(config);
+  
+  let allSpeakers: Speaker[] = [];
 
-  return data.map((row: any) => {
-    const [ Name ] = row
-    return {
-      name: Name,
+  for (const sheetName of sheetNames) {
+    if (sheetName === 'Presentation Schedule - 15 July' || sheetName === 'Presentation Schedule - 16 July') { 
+      const data = await getDataForRange(config, sheetName, SPEAKER_DATA_RANGE);
+      
+      const speakerNames = [...new Set(data.flat().filter(Boolean))];
+
+      const speakers = speakerNames.map(name => ({
+        id: name,
+        name,
+      }));
+
+      // @ts-ignore
+      allSpeakers.push(...speakers);
     }
-  })
+  }
+
+  return allSpeakers;
 }
 
 export async function getSessions(config: DataConfig): Promise<Session[]> {
-  const data = await getDataForRange(config, SESSION_DATA_RANGE)
+  const sheetNames = await getSheetNames(config)
   const speakerData = await getSpeakers(config)
   const stageData = await GetStages(config)
 
-  return data.map((row: any) => {
-    const [Time, Speaker, Name, EM, Duration, video] = row
-    if (GetSlug(Name) === '') return null
+  const sessions: Session[] = []
 
-    console.log
-    const speakersRaw = Speaker.map((id: string) => {
-      let speaker
-      console.log("Speaker")
-      console.log(id)
+  for (const sheetName of sheetNames) {
+    if (sheetName.includes('Presentation Schedule')) {
+      const data = await getDataForRange(config, sheetName, SESSION_DATA_RANGE)
 
-      try {
-        if (!id) return null
+      const dateString = sheetName.replace('Presentation Schedule - ', '')
+      const date = new Date(`2023 ${dateString}`)
 
-        if (!speaker) throw new Error(`No speaker found for id ${id}`)
-      } catch (error) {
-        console.log(error)
-        return null
-      }
+      const sessionData = data.map((row: any) => {
+        const [Time, Speaker1, Speaker2, Speaker3, Speaker4, Speaker5, Talk, EM, Duration, video] = row
+        if (GetSlug(Talk) === '') return null
 
-      return speaker
-    })
-    console.log(speakersRaw)
+        const speakersRaw = [Speaker1, Speaker2, Speaker3, Speaker4, Speaker5].map((id: string) => {
+          let speaker
 
-    const speakers = speakersRaw.filter((i) => i !== null)
+          try {
+            if (!id) return null
 
-    let stage
-    try {
-      stage = stageData.find((i) => i.id === GetSlug("Main Stage"))
-      if (!stage) throw new Error(`No stage found for id Main Stage`)
-    } catch (error) {
-      console.error(error)
-      return null
+            speaker = speakerData.find((i) => {
+              return i.id === id
+            })
+            if (!speaker) throw new Error(`No speaker found for id ${id}`)
+          } catch (error) {
+            console.log(error)
+            return null
+          }
+
+          return speaker
+        })
+
+        const speakers = speakersRaw.filter((i) => i !== null)
+
+        let stage
+        try {
+          stage = stageData.find((i) => i.id === GetSlug('Main Stage'))
+          if (!stage) throw new Error(`No stage found for id Main Stage`)
+        } catch (error) {
+          console.error(error)
+          return null
+        }
+
+        let [TimeHours, TimeMinutes] = Time.split(':').map(Number)
+        let [DurationHours, DurationMinutes] = Duration.split(':').map(Number)
+
+        let startDate = new Date(date.getTime())
+        startDate.setHours(TimeHours, TimeMinutes)
+
+        let endDate = new Date(startDate.getTime())
+        endDate.setHours(endDate.getHours() + DurationHours)
+        endDate.setMinutes(endDate.getMinutes() + DurationMinutes)
+
+        let startStr = `${date.getFullYear()}-${('0' + (date.getMonth()+1)).slice(-2)}-${('0' + date.getDate()).slice(-2)} ${Time}`
+        let endStr = `${date.getFullYear()}-${('0' + (date.getMonth()+1)).slice(-2)}-${('0' + date.getDate()).slice(-2)} ${('0' + endDate.getHours()).slice(-2)}:${('0' + endDate.getMinutes()).slice(-2)}`
+
+        const start = datetimeToUnixTimestamp(startStr)
+        const end = datetimeToUnixTimestamp(endStr)
+
+        return {
+          id: GetSlug(Talk),
+          name: Talk,
+          description: 'Placeholder...', //TODO: Lil description?
+          start,
+          end,
+          stage,
+          speakers,
+          video: video ?? null,
+        }
+      })
+
+      sessions.push(...sessionData.filter(i => i !== null))
     }
+  }
 
-    let [TimeHours, TimeMinutes] = Time.split(':').map(Number);
-    let [DurationHours, DurationMinutes] = Duration.split(':').map(Number);
-
-    let startDate = new Date(2023, 6, 15, TimeHours, TimeMinutes);
-
-    let endDate = new Date(startDate.getTime());
-    endDate.setHours(endDate.getHours() + DurationHours);
-    endDate.setMinutes(endDate.getMinutes() + DurationMinutes);
-
-    let startStr = `2023-07-15 ${Time}`;
-    let endStr = `2023-07-15 ${('0' + endDate.getHours()).slice(-2)}:${('0' + endDate.getMinutes()).slice(-2)}`;
-
-    const start = datetimeToUnixTimestamp(startStr);
-    const end = datetimeToUnixTimestamp(endStr);
-
-
-    return {
-      id: GetSlug(Name),
-      name: Name,
-      description: "Placeholder...", //TODO: Lil description?
-      start,
-      end,
-      stage,
-      speakers,
-      video: video ?? null,
-    }
-  })
+  return sessions
 }
 
 export async function GetSchedule(config: DataConfig): Promise<Session[]> {
