@@ -10,9 +10,9 @@ import { Z_UNKNOWN } from 'zlib'
 
 /* -------------------- */
 
-const SPEAKER_DATA_RANGE = 'B3:G'
+const SPEAKER_DATA_RANGE = 'D3:H'
 
-const SESSION_DATA_RANGE = 'A3:L'
+const SESSION_DATA_RANGE = 'A3:M'
 
 /* -------------------- */
 
@@ -110,12 +110,10 @@ export async function getSessions(config: DataConfig): Promise<Session[]> {
   const speakerData = await getSpeakers(config);
   const stageData = await GetStages(config);
 
-  const sessions: Session[] = [];
-
   const data = await getDataForRange(config, sheetName, SESSION_DATA_RANGE);
 
   const sessionData = data.map((row: any) => {
-    const [Time, Date, Speaker1, Speaker2, Speaker3, Speaker4, Speaker5, Talk, EM, Duration, video] = row;
+    const [Time, Date, Talk, Speaker1, Speaker2, Speaker3, Speaker4, Speaker5, EM, Duration, Track, Flow, Video] = row;
     if (GetSlug(Talk) === '') return null;
 
     const speakers = [Speaker1, Speaker2, Speaker3, Speaker4, Speaker5]
@@ -136,7 +134,7 @@ export async function getSessions(config: DataConfig): Promise<Session[]> {
       end,
       stage,
       speakers,
-      video: video ?? null,
+      video: Video ?? null,
     };
   });
 
