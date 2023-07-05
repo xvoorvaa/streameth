@@ -16,6 +16,7 @@ import { configureChains, createClient, WagmiConfig } from 'wagmi'
 import { mainnet } from 'wagmi/chains'
 import { infuraProvider } from 'wagmi/providers/infura'
 import { publicProvider } from 'wagmi/providers/public'
+
 type Props = {
   pages: page[]
   event: any
@@ -32,8 +33,14 @@ type LayoutProps = {
 }
 
 const { chains, provider } = configureChains([mainnet], [infuraProvider({ apiKey: process.env.NEXT_PUBLIC_INFURA_API_KEY ?? '' }), publicProvider()])
+
+if (!process.env.WALLET_PROJECTID) {
+  console.error('Env: WALLET_PROJECTID is not set')
+}
+
 const { connectors } = getDefaultWallets({
   appName: 'StreamETH',
+  projectId: process.env.NEXT_PUBLIC_WALLET_PROJECTID as string,
   chains,
 })
 const wagmiClient = createClient({
@@ -41,6 +48,7 @@ const wagmiClient = createClient({
   connectors,
   provider,
 })
+
 export default function App({ Component, pageProps }: AppLayoutProps) {
   useEffect(() => {
     const plugin = pageProps.event?.plugins.find((i: any) => i['name'] === 'matomo')
