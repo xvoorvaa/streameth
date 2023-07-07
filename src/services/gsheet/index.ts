@@ -129,7 +129,7 @@ export async function getSessions(config: DataConfig): Promise<Session[]> {
     return {
       id: GetSlug(Talk),
       name: Talk,
-      description: 'Placeholder...',
+      description: '',
       start,
       end,
       stage,
