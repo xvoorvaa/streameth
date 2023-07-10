@@ -34,8 +34,8 @@ type LayoutProps = {
 
 const { chains, provider } = configureChains([mainnet], [infuraProvider({ apiKey: process.env.NEXT_PUBLIC_INFURA_API_KEY ?? '' }), publicProvider()])
 
-if (!process.env.WALLET_PROJECTID) {
-  console.error('Env: WALLET_PROJECTID is not set')
+if (!process.env.NEXT_PUBLIC_WALLET_PROJECTID) {
+  console.error('Env: NEXT_PUBLIC_WALLET_PROJECTID is not set')
 }
 
 const { connectors } = getDefaultWallets({
