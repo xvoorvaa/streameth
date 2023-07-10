@@ -23,17 +23,17 @@ export type SessionStatus = 'UPCOMING' | 'LIVE' | 'COMPLETED'
 export interface Session {
   id: string
   name: string
-  //abstract?: string
   description: string
   gpt_description?: string
   track?: string
-  //type?: string
   stage: Stage
   start: number
   end: number
   speakers: Speaker[]
   video?: string
   status?: SessionStatus
+  startCut: string
+  endCut: string
 }
 
 export interface Speaker {
