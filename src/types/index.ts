@@ -32,8 +32,8 @@ export interface Session {
   speakers: Speaker[]
   video?: string
   status?: SessionStatus
-  startCut: string
-  endCut: string
+  startCut?: string
+  endCut?: string
 }
 
 export interface Speaker {
