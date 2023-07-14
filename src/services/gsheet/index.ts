@@ -7,12 +7,13 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import PQueue from 'p-queue'
 import { Z_UNKNOWN } from 'zlib'
+import { DesktopOptions } from '@rainbow-me/rainbowkit/dist/components/ConnectOptions/DesktopOptions'
 
 /* -------------------- */
 
 const SPEAKER_DATA_RANGE = 'D3:H'
 
-const SESSION_DATA_RANGE = 'A3:O'
+const SESSION_DATA_RANGE = 'A3:P'
 
 /* -------------------- */
 
@@ -113,7 +114,7 @@ export async function getSessions(config: DataConfig): Promise<Session[]> {
   const data = await getDataForRange(config, sheetName, SESSION_DATA_RANGE)
 
   const sessionData = data.map((row: any) => {
-    const [Time, Date, Talk, Speaker1, Speaker2, Speaker3, Speaker4, Speaker5, EM, Duration, Track, Flow, Video, startCut, endCut] = row
+    const [Time, Date, Talk, Speaker1, Speaker2, Speaker3, Speaker4, Speaker5, EM, Duration, Track, Flow, Video, startCut, endCut, Description] = row
     if (GetSlug(Talk) === '') return null
 
     const speakers = [Speaker1, Speaker2, Speaker3, Speaker4, Speaker5]
@@ -125,18 +126,19 @@ export async function getSessions(config: DataConfig): Promise<Session[]> {
     const start = datetimeToUnixTimestamp(`${Date} ${Time}`)
     const endTime = getEndTime(Time, Duration)
     const end = datetimeToUnixTimestamp(`${Date} ${endTime}`)
+    console.log(Description)
 
     return {
       id: GetSlug(Talk),
       name: Talk,
-      description: '',
+      description: Description ?? '',
       start,
       end,
       stage,
       speakers,
       video: Video ?? null,
       startCut,
-      endCut
+      endCut,
     }
   })
 
