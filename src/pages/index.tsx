@@ -1,6 +1,6 @@
 import { GetStaticProps } from 'next'
 import { Stage, Session, page } from 'types'
-import ScheduleComponent from 'components/Schedule/ScheduleComponent'
+import ArchiveComponent from 'components/Archive/ArchiveComponent'
 import { SEO } from 'components/seo'
 import { GetStages, GenerateNavigation } from 'services/stage'
 import { GetSessions } from 'services/sessions'
@@ -13,12 +13,14 @@ interface Props {
   pages: page[]
 }
 
-export default function StagePage({ stages, sessions, pages }: Props) {
+export default function Schedule(props: Props) {
+  const { sessions, pages } = props
+
   return (
-    <PageContextProvider sessions={sessions} stages={stages}>
+    <PageContextProvider sessions={sessions}>
       <DefaultLayout pages={pages}>
-        <SEO title="schedule" />
-        <ScheduleComponent />
+        <SEO title="archive" />
+        <ArchiveComponent />
       </DefaultLayout>
     </PageContextProvider>
   )

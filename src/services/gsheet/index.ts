@@ -6,8 +6,6 @@ import { datetimeToUnixTimestamp } from 'utils/dateTime'
 import { promises as fs } from 'fs'
 import path from 'path'
 import PQueue from 'p-queue'
-import { Z_UNKNOWN } from 'zlib'
-import { DesktopOptions } from '@rainbow-me/rainbowkit/dist/components/ConnectOptions/DesktopOptions'
 
 /* -------------------- */
 
@@ -126,7 +124,6 @@ export async function getSessions(config: DataConfig): Promise<Session[]> {
     const start = datetimeToUnixTimestamp(`${Date} ${Time}`)
     const endTime = getEndTime(Time, Duration)
     const end = datetimeToUnixTimestamp(`${Date} ${endTime}`)
-    console.log(Description)
 
     return {
       id: GetSlug(Talk),
